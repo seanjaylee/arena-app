@@ -5,6 +5,9 @@ import { enrichComments } from "@/lib/comment-data";
 import type { CommentWithProfile } from "@/lib/comment-types";
 import type { Side } from "@/lib/types";
 
+// 실시간 데이터(투표/댓글/좋아요)라 매 요청마다 최신 상태를 조회
+export const dynamic = "force-dynamic";
+
 export default async function ArenaDetailPage({
   params,
 }: {
