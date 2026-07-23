@@ -29,12 +29,19 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur">
-          <Link href="/" className="text-lg font-bold">
-            컨텐츠 아레나
-          </Link>
-          <AuthButton />
+      <body className="min-h-full flex flex-col bg-bg text-ink">
+        <header className="sticky top-0 z-20 border-b border-line-soft bg-bg/70 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
+            <Link href="/" className="group flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-corner-a to-corner-b text-[11px] font-black italic text-white shadow-lg shadow-corner-a/20">
+                VS
+              </span>
+              <span className="text-[15px] font-bold tracking-tight text-ink">
+                컨텐츠 아레나
+              </span>
+            </Link>
+            <AuthButton />
+          </div>
         </header>
         <main className="flex-1">{children}</main>
       </body>

@@ -8,7 +8,7 @@ import VoteBar from "@/components/VoteBar";
 import VoteButtons from "@/components/VoteButtons";
 import CommentList from "@/components/CommentList";
 import CommentInput from "@/components/CommentInput";
-import { isEnded } from "@/lib/time";
+import { isEnded, timeLeftLabel } from "@/lib/time";
 import type { Arena, Side } from "@/lib/types";
 import type { CommentWithProfile } from "@/lib/comment-types";
 
@@ -101,84 +101,157 @@ export default function ArenaDetail({
   };
 
   const filteredComments = comments.filter((c) => c.side === tab);
+  const commentCountA = comments.filter((c) => c.side === "A").length;
+  const commentCountB = comments.filter((c) => c.side === "B").length;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 flex flex-col gap-6">
-      <div>
-        <h1 className="mb-1 text-lg font-bold">
+    <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-24 pt-5">
+      {/* 제목 + 상태 */}
+      <div className="flex flex-col gap-2">
+        <span
+          className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+            ended ? "bg-surface-2 text-muted" : "bg-corner-a/10 text-corner-a-soft"
+          }`}
+        >
+          {ended ? "종료된 대결" : timeLeftLabel(arena.end_at)}
+        </span>
+        <h1 className="text-xl font-bold leading-snug text-ink">
           {arena.title || `${arena.side_a_title} vs ${arena.side_b_title}`}
         </h1>
-        <p className="text-xs text-gray-400">{ended ? "종료됨" : "진행 중"}</p>
       </div>
 
-      <div className="flex gap-4">
-        <SideImage title={arena.side_a_title} image={arena.side_a_image} />
-        <SideImage title={arena.side_b_title} image={arena.side_b_image} />
+      {/* 히어로 대진 */}
+      <div className="relative flex items-stretch gap-3 rounded-2xl border border-line bg-surface p-4">
+        <SideImage title={arena.side_a_title} image={arena.side_a_image} corner="a" />
+        <div className="absolute left-1/2 top-1/2 z-10 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-bg text-xs font-black italic text-ink shadow-xl">
+          VS
+        </div>
+        <SideImage title={arena.side_b_title} image={arena.side_b_image} corner="b" />
       </div>
 
-      <VoteBar
-        votesA={votesA}
-        votesB={votesB}
-        labelA={arena.side_a_title}
-        labelB={arena.side_b_title}
-      />
+      {/* 득표율 */}
+      <div className="rounded-2xl border border-line bg-surface p-4">
+        <VoteBar
+          votesA={votesA}
+          votesB={votesB}
+          labelA={arena.side_a_title}
+          labelB={arena.side_b_title}
+          size="lg"
+        />
+      </div>
 
+      {/* 투표 */}
+      {!ended && !myVote && (
+        <p className="-mb-2 text-center text-xs font-medium text-muted">
+          어느 편인가요? 투표하면 댓글로 참전할 수 있어요.
+        </p>
+      )}
       <VoteButtons
         labelA={arena.side_a_title}
         labelB={arena.side_b_title}
         myVote={myVote}
         disabled={ended || !!myVote || voting}
+        ended={ended}
         onVote={handleVote}
       />
 
-      <div>
-        <div className="mb-3 flex gap-2 border-b border-gray-200">
-          <button
+      {/* 논쟁 스레드 */}
+      <div className="mt-2">
+        <h2 className="mb-3 text-sm font-bold text-ink">논쟁 스레드</h2>
+        <div className="mb-4 flex gap-2">
+          <ThreadTab
+            active={tab === "A"}
+            corner="a"
+            label={`${arena.side_a_title}파`}
+            count={commentCountA}
             onClick={() => setTab("A")}
-            className={`border-b-2 px-3 py-2 text-sm font-medium ${
-              tab === "A" ? "border-rose-500 text-rose-600" : "border-transparent text-gray-400"
-            }`}
-          >
-            {arena.side_a_title}파
-          </button>
-          <button
+          />
+          <ThreadTab
+            active={tab === "B"}
+            corner="b"
+            label={`${arena.side_b_title}파`}
+            count={commentCountB}
             onClick={() => setTab("B")}
-            className={`border-b-2 px-3 py-2 text-sm font-medium ${
-              tab === "B" ? "border-indigo-500 text-indigo-600" : "border-transparent text-gray-400"
-            }`}
-          >
-            {arena.side_b_title}파
-          </button>
+          />
         </div>
         <CommentList comments={filteredComments} />
       </div>
 
+      {/* 댓글 입력 */}
       {myVote ? (
         <CommentInput side={myVote} onSubmit={handleComment} />
       ) : (
-        <p className="border-t border-gray-200 pt-3 text-center text-xs text-gray-400">
-          투표 후 댓글을 남길 수 있어요.
+        <p className="rounded-xl border border-dashed border-line py-3 text-center text-xs text-muted">
+          {ended ? "종료된 대결입니다." : "투표 후 댓글을 남길 수 있어요."}
         </p>
       )}
     </div>
   );
 }
 
-function SideImage({ title, image }: { title: string; image: string | null }) {
+function ThreadTab({
+  active,
+  corner,
+  label,
+  count,
+  onClick,
+}: {
+  active: boolean;
+  corner: "a" | "b";
+  label: string;
+  count: number;
+  onClick: () => void;
+}) {
+  const isA = corner === "a";
+  const activeStyle = isA
+    ? "border-corner-a bg-corner-a/10 text-corner-a-soft"
+    : "border-corner-b bg-corner-b/10 text-corner-b-soft";
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+        active ? activeStyle : "border-line bg-surface text-muted hover:text-ink"
+      }`}
+    >
+      <span className="line-clamp-1">{label}</span>
+      <span className="text-xs opacity-70">{count}</span>
+    </button>
+  );
+}
+
+function SideImage({
+  title,
+  image,
+  corner,
+}: {
+  title: string;
+  image: string | null;
+  corner: "a" | "b";
+}) {
+  const isA = corner === "a";
+  const ring = isA ? "ring-corner-a/40" : "ring-corner-b/40";
+  const fallback = isA ? "from-corner-a/25" : "from-corner-b/25";
+  const tag = isA ? "text-corner-a" : "text-corner-b";
+
   return (
     <div className="flex flex-1 flex-col items-center gap-2">
-      {image ? (
-        <Image
-          src={image}
-          alt={title}
-          width={160}
-          height={160}
-          className="h-32 w-32 rounded-xl object-cover"
-        />
-      ) : (
-        <div className="h-32 w-32 rounded-xl bg-gray-100" />
-      )}
-      <span className="text-center text-sm font-medium">{title}</span>
+      <div className={`relative aspect-square w-full overflow-hidden rounded-xl ring-1 ${ring}`}>
+        {image ? (
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="(max-width: 640px) 45vw, 240px"
+            className="object-cover"
+          />
+        ) : (
+          <div className={`h-full w-full bg-gradient-to-br ${fallback} to-surface-2`} />
+        )}
+      </div>
+      <span className={`text-[10px] font-black uppercase tracking-widest ${tag}`}>
+        {isA ? "Red" : "Blue"}
+      </span>
+      <span className="line-clamp-1 text-center text-sm font-bold text-ink">{title}</span>
     </div>
   );
 }

@@ -41,7 +41,7 @@ export default function AuthButton() {
     return (
       <Link
         href="/login"
-        className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+        className="rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-bg transition hover:opacity-90"
       >
         로그인
       </Link>
@@ -50,10 +50,10 @@ export default function AuthButton() {
 
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="font-medium">{nickname}</span>
+      <span className="font-semibold text-ink">{nickname}</span>
       <button
         onClick={() => supabase.auth.signOut().then(() => window.location.reload())}
-        className="text-gray-500 hover:text-gray-800"
+        className="text-muted transition hover:text-ink"
       >
         로그아웃
       </button>

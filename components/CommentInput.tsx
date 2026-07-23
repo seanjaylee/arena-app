@@ -27,12 +27,28 @@ export default function CommentInput({
     }
   };
 
+  const isA = side === "A";
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 border-t border-gray-200 pt-3">
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>{side === "A" ? "A파" : "B파"}로 댓글 남기기</span>
-        <label className="flex items-center gap-1">
-          <input type="checkbox" checked={spoiler} onChange={(e) => setSpoiler(e.target.checked)} />
+    <form
+      onSubmit={handleSubmit}
+      className="sticky bottom-4 flex flex-col gap-2.5 rounded-2xl border border-line bg-surface/95 p-3 backdrop-blur-xl"
+    >
+      <div className="flex items-center justify-between text-[11px]">
+        <span
+          className={`rounded-full px-2 py-0.5 font-semibold ${
+            isA ? "bg-corner-a/10 text-corner-a-soft" : "bg-corner-b/10 text-corner-b-soft"
+          }`}
+        >
+          {isA ? "Red Corner" : "Blue Corner"}으로 참전
+        </span>
+        <label className="flex cursor-pointer items-center gap-1.5 text-muted">
+          <input
+            type="checkbox"
+            checked={spoiler}
+            onChange={(e) => setSpoiler(e.target.checked)}
+            className="accent-gold"
+          />
           스포일러
         </label>
       </div>
@@ -42,12 +58,12 @@ export default function CommentInput({
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="논쟁에 참전하세요..."
-          className="flex-1 rounded-full border border-gray-300 px-4 py-2 text-sm"
+          className="flex-1 rounded-full border border-line bg-bg px-4 py-2.5 text-sm text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
         />
         <button
           type="submit"
-          disabled={submitting}
-          className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          disabled={submitting || !body.trim()}
+          className="shrink-0 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-bg transition hover:opacity-90 disabled:opacity-40"
         >
           등록
         </button>

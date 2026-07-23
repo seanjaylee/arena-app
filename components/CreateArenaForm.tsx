@@ -95,35 +95,47 @@ export default function CreateArenaForm() {
   if (checkingAuth) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-xl px-4 py-8 flex flex-col gap-6">
-      <h1 className="text-xl font-bold">대결 만들기</h1>
-
+    <form onSubmit={handleSubmit} className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-24 pt-5">
       <div>
-        <label className="block text-sm font-medium mb-1">대결 제목 (선택)</label>
+        <h1 className="text-xl font-bold text-ink">대결 만들기</h1>
+        <p className="mt-1 text-sm text-muted">두 작품을 링에 올리고 투표를 받아보세요.</p>
+      </div>
+
+      {/* 대진 카드 */}
+      <div className="relative flex items-stretch gap-3 rounded-2xl border border-line bg-surface p-4">
+        <SideFields corner="a" value={sideA} onChange={setSideA} />
+        <div className="absolute left-1/2 top-[38%] z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-line bg-bg text-[11px] font-black italic text-ink shadow-xl">
+          VS
+        </div>
+        <SideFields corner="b" value={sideB} onChange={setSideB} />
+      </div>
+
+      {/* 대결 제목 */}
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-ink">
+          대결 제목 <span className="font-normal text-faint">(선택)</span>
+        </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="예: 진격의 거인 vs 강철의 연금술사, 최종 보스는?"
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          placeholder="예: 최종 보스는 누가 더 강한가?"
+          className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-sm text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
         />
+        <p className="mt-1.5 text-xs text-faint">비워두면 &quot;A vs B&quot; 형태로 자동 생성돼요.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <SideFields label="작품 A" value={sideA} onChange={setSideA} />
-        <SideFields label="작품 B" value={sideB} onChange={setSideB} />
-      </div>
-
+      {/* 기간 */}
       <div>
-        <label className="block text-sm font-medium mb-2">대결 기간</label>
+        <label className="mb-2 block text-sm font-semibold text-ink">대결 기간</label>
         <div className="flex gap-3">
           {[3, 7].map((d) => (
             <label
               key={d}
-              className={`flex-1 cursor-pointer rounded-lg border px-4 py-2 text-center text-sm font-medium ${
+              className={`flex-1 cursor-pointer rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
                 durationDays === d
-                  ? "border-black bg-black text-white"
-                  : "border-gray-300 text-gray-600"
+                  ? "border-ink bg-ink text-bg"
+                  : "border-line bg-surface text-muted hover:text-ink"
               }`}
             >
               <input
@@ -133,18 +145,22 @@ export default function CreateArenaForm() {
                 checked={durationDays === d}
                 onChange={() => setDurationDays(d as 3 | 7)}
               />
-              {d}일
+              {d}일간
             </label>
           ))}
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="rounded-xl border border-corner-a/30 bg-corner-a/10 px-4 py-3 text-sm text-corner-a-soft">
+          {error}
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-full bg-black py-3 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-full bg-gradient-to-r from-corner-a to-corner-b py-3.5 text-sm font-bold text-white shadow-lg shadow-corner-a/20 transition hover:opacity-95 disabled:opacity-50"
       >
         {submitting ? "등록 중..." : "대결 등록하기"}
       </button>
@@ -153,29 +169,52 @@ export default function CreateArenaForm() {
 }
 
 function SideFields({
-  label,
+  corner,
   value,
   onChange,
 }: {
-  label: string;
+  corner: "a" | "b";
   value: SideInput;
   onChange: (v: SideInput) => void;
 }) {
+  const isA = corner === "a";
+  const tag = isA ? "text-corner-a" : "text-corner-b";
+  const ring = isA ? "border-corner-a/40" : "border-corner-b/40";
+  const preview = value.file ? URL.createObjectURL(value.file) : null;
+
   return (
-    <div className="flex flex-col gap-2">
-      <label className="block text-sm font-medium">{label}</label>
+    <div className="flex flex-1 flex-col items-center gap-2">
+      <span className={`text-[10px] font-black uppercase tracking-widest ${tag}`}>
+        {isA ? "Red Corner" : "Blue Corner"}
+      </span>
+
+      <label
+        className={`relative flex aspect-square w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed ${ring} bg-bg transition hover:bg-surface-2`}
+      >
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={preview} alt="미리보기" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-center text-[11px] font-medium text-faint">
+            이미지
+            <br />
+            추가
+          </span>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => onChange({ ...value, file: e.target.files?.[0] ?? null })}
+          className="hidden"
+        />
+      </label>
+
       <input
         type="text"
         value={value.title}
         onChange={(e) => onChange({ ...value, title: e.target.value })}
         placeholder="작품 제목"
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-      />
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => onChange({ ...value, file: e.target.files?.[0] ?? null })}
-        className="text-xs"
+        className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-center text-sm text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
       />
     </div>
   );
