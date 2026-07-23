@@ -17,8 +17,8 @@ export default function VoteBar({
   const leadA = pctA > pctB;
   const leadB = pctB > pctA;
 
-  const pctClass = size === "lg" ? "text-2xl" : "text-lg";
-  const barH = size === "lg" ? "h-3" : "h-2.5";
+  const pctClass = size === "lg" ? "text-3xl" : "text-xl";
+  const barH = size === "lg" ? "h-3.5" : "h-3";
 
   return (
     <div>
@@ -31,12 +31,12 @@ export default function VoteBar({
           >
             {pctA}%
           </span>
-          <span className="max-w-[8rem] truncate text-xs font-medium text-muted">
+          <span className="max-w-[8rem] truncate text-[13px] font-medium text-muted">
             {labelA}
           </span>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="max-w-[8rem] truncate text-right text-xs font-medium text-muted">
+          <span className="max-w-[8rem] truncate text-right text-[13px] font-medium text-muted">
             {labelB}
           </span>
           <span
@@ -61,7 +61,7 @@ export default function VoteBar({
         />
       </div>
 
-      <p className="mt-1.5 text-center text-[11px] font-medium text-faint">
+      <p className="mt-2 text-center text-[13px] font-medium text-faint">
         {total === 0 ? "아직 표가 없어요" : `총 ${total.toLocaleString()}표`}
       </p>
     </div>

@@ -44,11 +44,22 @@ create table if not exists comments (
   created_at timestamptz default now()
 );
 
+-- 댓글 좋아요 (1인 1좋아요: comment_id + user_id 유니크)
+create table if not exists comment_likes (
+  id uuid default gen_random_uuid() primary key,
+  comment_id uuid references comments(id) on delete cascade,
+  arena_id uuid references arenas(id) on delete cascade,
+  user_id uuid references profiles(id),
+  created_at timestamptz default now(),
+  unique (comment_id, user_id)
+);
+
 -- RLS 활성화 (기본: 전체 조회 가능, 쓰기는 로그인 유저만)
 alter table profiles enable row level security;
 alter table arenas enable row level security;
 alter table votes enable row level security;
 alter table comments enable row level security;
+alter table comment_likes enable row level security;
 
 drop policy if exists "profiles_select_all" on profiles;
 create policy "profiles_select_all" on profiles for select using (true);
@@ -69,6 +80,13 @@ drop policy if exists "comments_select_all" on comments;
 create policy "comments_select_all" on comments for select using (true);
 drop policy if exists "comments_insert_auth" on comments;
 create policy "comments_insert_auth" on comments for insert with check (auth.uid() = user_id);
+
+drop policy if exists "comment_likes_select_all" on comment_likes;
+create policy "comment_likes_select_all" on comment_likes for select using (true);
+drop policy if exists "comment_likes_insert_own" on comment_likes;
+create policy "comment_likes_insert_own" on comment_likes for insert with check (auth.uid() = user_id);
+drop policy if exists "comment_likes_delete_own" on comment_likes;
+create policy "comment_likes_delete_own" on comment_likes for delete using (auth.uid() = user_id);
 
 -- Google 로그인 성공 시 profiles 테이블에 자동으로 행 생성
 create or replace function public.handle_new_user()

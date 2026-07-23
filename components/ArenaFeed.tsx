@@ -48,12 +48,12 @@ export default function ArenaFeed({ items }: { items: ArenaWithStats[] }) {
             VS
           </div>
           <div>
-            <p className="font-semibold text-ink">아직 열린 대결이 없어요</p>
-            <p className="mt-1 text-sm text-muted">첫 대결을 만들어 투기장을 열어보세요!</p>
+            <p className="text-lg font-semibold text-ink">아직 열린 대결이 없어요</p>
+            <p className="mt-1 text-[15px] text-muted">첫 대결을 만들어 투기장을 열어보세요!</p>
           </div>
           <Link
             href="/arena/new"
-            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-bg transition hover:opacity-90"
+            className="rounded-full bg-ink px-5 py-3 text-[15px] font-semibold text-bg transition hover:opacity-90"
           >
             대결 만들기
           </Link>
@@ -79,7 +79,7 @@ export default function ArenaFeed({ items }: { items: ArenaWithStats[] }) {
         aria-label="대결 만들기"
       >
         <span className="text-xl leading-none">+</span>
-        <span className="text-sm">대결 만들기</span>
+        <span className="text-[15px]">대결 만들기</span>
       </Link>
     </div>
   );
@@ -97,7 +97,7 @@ function SortTab({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${
+      className={`flex-1 rounded-full px-3 py-2.5 text-[15px] font-semibold transition ${
         active ? "bg-ink text-bg" : "text-muted hover:text-ink"
       }`}
     >

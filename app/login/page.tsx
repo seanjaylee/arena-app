@@ -21,8 +21,8 @@ export default function LoginPage() {
           VS
         </span>
         <div>
-          <h1 className="text-2xl font-bold text-ink">컨텐츠 아레나</h1>
-          <p className="mt-2 text-sm text-muted">
+          <h1 className="text-3xl font-bold text-ink">컨텐츠 아레나</h1>
+          <p className="mt-2.5 text-[15px] leading-relaxed text-muted">
             A vs B, 넌 어느 편?
             <br />내가 사랑하는 작품, 너도 보게 만든다.
           </p>

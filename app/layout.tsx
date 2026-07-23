@@ -33,10 +33,10 @@ export default function RootLayout({
         <header className="sticky top-0 z-20 border-b border-line-soft bg-bg/70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
             <Link href="/" className="group flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-corner-a to-corner-b text-[11px] font-black italic text-white shadow-lg shadow-corner-a/20">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-corner-a to-corner-b text-[12px] font-black italic text-white shadow-lg shadow-corner-a/20">
                 VS
               </span>
-              <span className="text-[15px] font-bold tracking-tight text-ink">
+              <span className="text-[17px] font-bold tracking-tight text-ink">
                 컨텐츠 아레나
               </span>
             </Link>

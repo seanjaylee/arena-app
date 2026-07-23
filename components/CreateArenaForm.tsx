@@ -97,8 +97,8 @@ export default function CreateArenaForm() {
   return (
     <form onSubmit={handleSubmit} className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-24 pt-5">
       <div>
-        <h1 className="text-xl font-bold text-ink">대결 만들기</h1>
-        <p className="mt-1 text-sm text-muted">두 작품을 링에 올리고 투표를 받아보세요.</p>
+        <h1 className="text-2xl font-bold text-ink">대결 만들기</h1>
+        <p className="mt-1 text-[15px] text-muted">두 작품을 링에 올리고 투표를 받아보세요.</p>
       </div>
 
       {/* 대진 카드 */}
@@ -112,7 +112,7 @@ export default function CreateArenaForm() {
 
       {/* 대결 제목 */}
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-ink">
+        <label className="mb-1.5 block text-[15px] font-semibold text-ink">
           대결 제목 <span className="font-normal text-faint">(선택)</span>
         </label>
         <input
@@ -120,19 +120,19 @@ export default function CreateArenaForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="예: 최종 보스는 누가 더 강한가?"
-          className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-sm text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
+          className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-[15px] text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
         />
-        <p className="mt-1.5 text-xs text-faint">비워두면 &quot;A vs B&quot; 형태로 자동 생성돼요.</p>
+        <p className="mt-1.5 text-[13px] text-faint">비워두면 &quot;A vs B&quot; 형태로 자동 생성돼요.</p>
       </div>
 
       {/* 기간 */}
       <div>
-        <label className="mb-2 block text-sm font-semibold text-ink">대결 기간</label>
+        <label className="mb-2 block text-[15px] font-semibold text-ink">대결 기간</label>
         <div className="flex gap-3">
           {[3, 7].map((d) => (
             <label
               key={d}
-              className={`flex-1 cursor-pointer rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
+              className={`flex-1 cursor-pointer rounded-xl border px-4 py-3.5 text-center text-[15px] font-semibold transition ${
                 durationDays === d
                   ? "border-ink bg-ink text-bg"
                   : "border-line bg-surface text-muted hover:text-ink"
@@ -152,7 +152,7 @@ export default function CreateArenaForm() {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-corner-a/30 bg-corner-a/10 px-4 py-3 text-sm text-corner-a-soft">
+        <p className="rounded-xl border border-corner-a/30 bg-corner-a/10 px-4 py-3 text-[15px] text-corner-a-soft">
           {error}
         </p>
       )}
@@ -160,7 +160,7 @@ export default function CreateArenaForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-full bg-gradient-to-r from-corner-a to-corner-b py-3.5 text-sm font-bold text-white shadow-lg shadow-corner-a/20 transition hover:opacity-95 disabled:opacity-50"
+        className="rounded-full bg-gradient-to-r from-corner-a to-corner-b py-4 text-base font-bold text-white shadow-lg shadow-corner-a/20 transition hover:opacity-95 disabled:opacity-50"
       >
         {submitting ? "등록 중..." : "대결 등록하기"}
       </button>
@@ -184,7 +184,7 @@ function SideFields({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-2">
-      <span className={`text-[10px] font-black uppercase tracking-widest ${tag}`}>
+      <span className={`text-[11px] font-black uppercase tracking-widest ${tag}`}>
         {isA ? "Red Corner" : "Blue Corner"}
       </span>
 
@@ -195,7 +195,7 @@ function SideFields({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={preview} alt="미리보기" className="h-full w-full object-cover" />
         ) : (
-          <span className="text-center text-[11px] font-medium text-faint">
+          <span className="text-center text-[13px] font-medium text-faint">
             이미지
             <br />
             추가
@@ -214,7 +214,7 @@ function SideFields({
         value={value.title}
         onChange={(e) => onChange({ ...value, title: e.target.value })}
         placeholder="작품 제목"
-        className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-center text-sm text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
+        className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-center text-[15px] text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
       />
     </div>
   );

@@ -58,7 +58,7 @@ function CornerButton({
 }) {
   const isA = corner === "a";
   const base =
-    "relative flex-1 rounded-2xl border px-4 py-4 text-sm font-bold transition duration-200 disabled:cursor-not-allowed";
+    "relative flex-1 rounded-2xl border px-4 py-4 text-base font-bold transition duration-200 disabled:cursor-not-allowed";
 
   let style: string;
   if (selected) {
@@ -76,14 +76,14 @@ function CornerButton({
   return (
     <button type="button" disabled={disabled} onClick={onClick} className={`${base} ${style}`}>
       <span
-        className={`mb-1 block text-[10px] font-black uppercase tracking-widest ${
+        className={`mb-1 block text-[11px] font-black uppercase tracking-widest ${
           selected ? "text-white/80" : isA ? "text-corner-a/80" : "text-corner-b/80"
         }`}
       >
         {isA ? "Red Corner" : "Blue Corner"}
       </span>
       <span className="line-clamp-2 leading-tight">{label}</span>
-      {selected && <span className="mt-1.5 block text-[11px] font-semibold">✓ 내 선택</span>}
+      {selected && <span className="mt-1.5 block text-[13px] font-semibold">✓ 내 선택</span>}
     </button>
   );
 }

@@ -14,11 +14,11 @@ export default function ArenaCard({ arena, votesA, votesB, commentCount }: Arena
     >
       {/* 헤더: 제목 + 상태 뱃지 */}
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
-        <h2 className="text-[15px] font-bold leading-snug text-ink">
+        <h2 className="text-[17px] font-bold leading-snug text-ink">
           {arena.title || `${arena.side_a_title} vs ${arena.side_b_title}`}
         </h2>
         <span
-          className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+          className={`shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold ${
             ended
               ? "bg-surface-2 text-muted"
               : "bg-corner-a/10 text-corner-a-soft"
@@ -50,8 +50,8 @@ export default function ArenaCard({ arena, votesA, votesB, commentCount }: Arena
       </div>
 
       {/* 푸터: 댓글 수 */}
-      <div className="flex items-center gap-1.5 border-t border-line-soft px-4 py-2.5 text-[12px] font-medium text-muted">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="opacity-70">
+      <div className="flex items-center gap-1.5 border-t border-line-soft px-4 py-3 text-[14px] font-medium text-muted">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="opacity-70">
           <path
             d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
             stroke="currentColor"
@@ -93,7 +93,7 @@ function SideThumb({
           <div className={`h-full w-full bg-gradient-to-br ${fallback} to-surface-2`} />
         )}
       </div>
-      <span className="line-clamp-1 w-full text-center text-[13px] font-semibold text-ink-soft">
+      <span className="line-clamp-1 w-full text-center text-[15px] font-semibold text-ink-soft">
         {title}
       </span>
     </div>

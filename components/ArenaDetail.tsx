@@ -1,16 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import VoteBar from "@/components/VoteBar";
 import VoteButtons from "@/components/VoteButtons";
 import CommentList from "@/components/CommentList";
+import CommentItem from "@/components/CommentItem";
 import CommentInput from "@/components/CommentInput";
 import { isEnded, timeLeftLabel } from "@/lib/time";
+import { enrichComments, pickBestComment, sortNewest } from "@/lib/comment-data";
 import type { Arena, Side } from "@/lib/types";
-import type { CommentWithProfile } from "@/lib/comment-types";
+import type { CommentWithProfile, CommentWithMeta } from "@/lib/comment-types";
 
 export default function ArenaDetail({
   arena,
@@ -24,7 +26,7 @@ export default function ArenaDetail({
   initialVotesA: number;
   initialVotesB: number;
   initialMyVote: Side | null;
-  initialComments: CommentWithProfile[];
+  initialComments: CommentWithMeta[];
   currentUserId: string | null;
 }) {
   const supabase = createClient();
@@ -33,25 +35,37 @@ export default function ArenaDetail({
   const [votesA, setVotesA] = useState(initialVotesA);
   const [votesB, setVotesB] = useState(initialVotesB);
   const [myVote, setMyVote] = useState<Side | null>(initialMyVote);
-  const [comments, setComments] = useState<CommentWithProfile[]>(initialComments);
+  const [comments, setComments] = useState<CommentWithMeta[]>(initialComments);
   const [tab, setTab] = useState<Side>(initialMyVote ?? "A");
   const [voting, setVoting] = useState(false);
 
   const ended = isEnded(arena.end_at);
 
   const refresh = useCallback(async () => {
-    const { data: votes } = await supabase.from("votes").select("side").eq("arena_id", arena.id);
+    const [{ data: votes }, { data: freshComments }, { data: likes }] = await Promise.all([
+      supabase.from("votes").select("side").eq("arena_id", arena.id),
+      supabase
+        .from("comments")
+        .select("*, profiles(nickname, profile_img)")
+        .eq("arena_id", arena.id)
+        .order("created_at", { ascending: true }),
+      supabase.from("comment_likes").select("comment_id, user_id").eq("arena_id", arena.id),
+    ]);
+
     if (votes) {
       setVotesA(votes.filter((v) => v.side === "A").length);
       setVotesB(votes.filter((v) => v.side === "B").length);
     }
-    const { data: freshComments } = await supabase
-      .from("comments")
-      .select("*, profiles(nickname, profile_img)")
-      .eq("arena_id", arena.id)
-      .order("created_at", { ascending: true });
-    if (freshComments) setComments(freshComments as unknown as CommentWithProfile[]);
-  }, [supabase, arena.id]);
+    if (freshComments) {
+      setComments(
+        enrichComments(
+          freshComments as unknown as CommentWithProfile[],
+          likes ?? [],
+          currentUserId
+        )
+      );
+    }
+  }, [supabase, arena.id, currentUserId]);
 
   useEffect(() => {
     const interval = setInterval(refresh, 5000);
@@ -83,6 +97,55 @@ export default function ArenaDetail({
     }
   };
 
+  const handleLike = async (commentId: string) => {
+    if (!currentUserId) {
+      router.push("/login");
+      return;
+    }
+
+    const target = comments.find((c) => c.id === commentId);
+    if (!target) return;
+    const wasLiked = target.liked_by_me;
+
+    // 낙관적 업데이트
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId
+          ? {
+              ...c,
+              liked_by_me: !wasLiked,
+              like_count: c.like_count + (wasLiked ? -1 : 1),
+            }
+          : c
+      )
+    );
+
+    const { error } = wasLiked
+      ? await supabase
+          .from("comment_likes")
+          .delete()
+          .eq("comment_id", commentId)
+          .eq("user_id", currentUserId)
+      : await supabase
+          .from("comment_likes")
+          .insert({ comment_id: commentId, arena_id: arena.id, user_id: currentUserId });
+
+    if (error) {
+      // 실패 시 롤백
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                liked_by_me: wasLiked,
+                like_count: c.like_count + (wasLiked ? 1 : -1),
+              }
+            : c
+        )
+      );
+    }
+  };
+
   const handleComment = async (body: string, spoiler: boolean) => {
     if (!currentUserId) {
       router.push("/login");
@@ -100,22 +163,38 @@ export default function ArenaDetail({
     await refresh();
   };
 
-  const filteredComments = comments.filter((c) => c.side === tab);
-  const commentCountA = comments.filter((c) => c.side === "A").length;
-  const commentCountB = comments.filter((c) => c.side === "B").length;
+  // 전체 댓글 중 좋아요 1위를 베스트로, 나머지는 편별 최신순
+  const { best, restByTab, commentCountA, commentCountB } = useMemo(() => {
+    const { best, rest } = pickBestComment(comments);
+    return {
+      best,
+      restByTab: {
+        A: sortNewest(rest.filter((c) => c.side === "A")),
+        B: sortNewest(rest.filter((c) => c.side === "B")),
+      },
+      commentCountA: comments.filter((c) => c.side === "A").length,
+      commentCountB: comments.filter((c) => c.side === "B").length,
+    };
+  }, [comments]);
+
+  const bestSideLabel = best
+    ? best.side === "A"
+      ? arena.side_a_title
+      : arena.side_b_title
+    : "";
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-24 pt-5">
+    <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-24 pt-6">
       {/* 제목 + 상태 */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         <span
-          className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+          className={`w-fit rounded-full px-3 py-1 text-[13px] font-semibold ${
             ended ? "bg-surface-2 text-muted" : "bg-corner-a/10 text-corner-a-soft"
           }`}
         >
           {ended ? "종료된 대결" : timeLeftLabel(arena.end_at)}
         </span>
-        <h1 className="text-xl font-bold leading-snug text-ink">
+        <h1 className="text-2xl font-bold leading-snug text-ink">
           {arena.title || `${arena.side_a_title} vs ${arena.side_b_title}`}
         </h1>
       </div>
@@ -123,7 +202,7 @@ export default function ArenaDetail({
       {/* 히어로 대진 */}
       <div className="relative flex items-stretch gap-3 rounded-2xl border border-line bg-surface p-4">
         <SideImage title={arena.side_a_title} image={arena.side_a_image} corner="a" />
-        <div className="absolute left-1/2 top-1/2 z-10 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-bg text-xs font-black italic text-ink shadow-xl">
+        <div className="absolute left-1/2 top-1/2 z-10 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-bg text-[13px] font-black italic text-ink shadow-xl">
           VS
         </div>
         <SideImage title={arena.side_b_title} image={arena.side_b_image} corner="b" />
@@ -142,7 +221,7 @@ export default function ArenaDetail({
 
       {/* 투표 */}
       {!ended && !myVote && (
-        <p className="-mb-2 text-center text-xs font-medium text-muted">
+        <p className="-mb-2 text-center text-sm font-medium text-muted">
           어느 편인가요? 투표하면 댓글로 참전할 수 있어요.
         </p>
       )}
@@ -157,7 +236,30 @@ export default function ArenaDetail({
 
       {/* 논쟁 스레드 */}
       <div className="mt-2">
-        <h2 className="mb-3 text-sm font-bold text-ink">논쟁 스레드</h2>
+        <h2 className="mb-3 text-[17px] font-bold text-ink">논쟁 스레드</h2>
+
+        {/* 베스트 댓글 고정 */}
+        {best && (
+          <div className="mb-5">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-1 text-[13px] font-bold text-gold">
+                🔥 베스트 논쟁
+              </span>
+              <span
+                className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${
+                  best.side === "A"
+                    ? "bg-corner-a/10 text-corner-a-soft"
+                    : "bg-corner-b/10 text-corner-b-soft"
+                }`}
+              >
+                {bestSideLabel}파
+              </span>
+            </div>
+            <CommentItem comment={best} onLike={handleLike} highlight />
+          </div>
+        )}
+
+        {/* 편별 탭 */}
         <div className="mb-4 flex gap-2">
           <ThreadTab
             active={tab === "A"}
@@ -174,14 +276,14 @@ export default function ArenaDetail({
             onClick={() => setTab("B")}
           />
         </div>
-        <CommentList comments={filteredComments} />
+        <CommentList comments={restByTab[tab]} onLike={handleLike} />
       </div>
 
       {/* 댓글 입력 */}
       {myVote ? (
         <CommentInput side={myVote} onSubmit={handleComment} />
       ) : (
-        <p className="rounded-xl border border-dashed border-line py-3 text-center text-xs text-muted">
+        <p className="rounded-xl border border-dashed border-line py-3.5 text-center text-sm text-muted">
           {ended ? "종료된 대결입니다." : "투표 후 댓글을 남길 수 있어요."}
         </p>
       )}
@@ -209,12 +311,12 @@ function ThreadTab({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-3 text-[15px] font-semibold transition ${
         active ? activeStyle : "border-line bg-surface text-muted hover:text-ink"
       }`}
     >
       <span className="line-clamp-1">{label}</span>
-      <span className="text-xs opacity-70">{count}</span>
+      <span className="text-[13px] opacity-70">{count}</span>
     </button>
   );
 }
@@ -248,10 +350,10 @@ function SideImage({
           <div className={`h-full w-full bg-gradient-to-br ${fallback} to-surface-2`} />
         )}
       </div>
-      <span className={`text-[10px] font-black uppercase tracking-widest ${tag}`}>
+      <span className={`text-[11px] font-black uppercase tracking-widest ${tag}`}>
         {isA ? "Red" : "Blue"}
       </span>
-      <span className="line-clamp-1 text-center text-sm font-bold text-ink">{title}</span>
+      <span className="line-clamp-1 text-center text-[15px] font-bold text-ink">{title}</span>
     </div>
   );
 }

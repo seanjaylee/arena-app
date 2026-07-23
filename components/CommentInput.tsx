@@ -34,9 +34,9 @@ export default function CommentInput({
       onSubmit={handleSubmit}
       className="sticky bottom-4 flex flex-col gap-2.5 rounded-2xl border border-line bg-surface/95 p-3 backdrop-blur-xl"
     >
-      <div className="flex items-center justify-between text-[11px]">
+      <div className="flex items-center justify-between text-[13px]">
         <span
-          className={`rounded-full px-2 py-0.5 font-semibold ${
+          className={`rounded-full px-2.5 py-1 font-semibold ${
             isA ? "bg-corner-a/10 text-corner-a-soft" : "bg-corner-b/10 text-corner-b-soft"
           }`}
         >
@@ -58,12 +58,12 @@ export default function CommentInput({
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="논쟁에 참전하세요..."
-          className="flex-1 rounded-full border border-line bg-bg px-4 py-2.5 text-sm text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
+          className="flex-1 rounded-full border border-line bg-bg px-4 py-3 text-[15px] text-ink placeholder:text-faint focus:border-ink-soft focus:outline-none"
         />
         <button
           type="submit"
           disabled={submitting || !body.trim()}
-          className="shrink-0 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-bg transition hover:opacity-90 disabled:opacity-40"
+          className="shrink-0 rounded-full bg-ink px-5 py-3 text-[15px] font-semibold text-bg transition hover:opacity-90 disabled:opacity-40"
         >
           등록
         </button>
