@@ -9,6 +9,7 @@ import VoteButtons from "@/components/VoteButtons";
 import CommentList from "@/components/CommentList";
 import CommentItem from "@/components/CommentItem";
 import CommentInput from "@/components/CommentInput";
+import ShareButton from "@/components/ShareButton";
 import { isEnded, timeLeftLabel } from "@/lib/time";
 import { enrichComments, pickBestComment, sortNewest } from "@/lib/comment-data";
 import type { Arena, Side } from "@/lib/types";
@@ -38,6 +39,7 @@ export default function ArenaDetail({
   const [comments, setComments] = useState<CommentWithMeta[]>(initialComments);
   const [tab, setTab] = useState<Side>(initialMyVote ?? "A");
   const [voting, setVoting] = useState(false);
+  const [mergedView, setMergedView] = useState(false);
 
   const ended = isEnded(arena.end_at);
 
@@ -163,8 +165,8 @@ export default function ArenaDetail({
     await refresh();
   };
 
-  // 전체 댓글 중 좋아요 1위를 베스트로, 나머지는 편별 최신순
-  const { best, restByTab, commentCountA, commentCountB } = useMemo(() => {
+  // 전체 댓글 중 좋아요 1위를 베스트로, 나머지는 편별 최신순 + 양쪽 통합 최신순
+  const { best, restByTab, restAll, commentCountA, commentCountB } = useMemo(() => {
     const { best, rest } = pickBestComment(comments);
     return {
       best,
@@ -172,10 +174,13 @@ export default function ArenaDetail({
         A: sortNewest(rest.filter((c) => c.side === "A")),
         B: sortNewest(rest.filter((c) => c.side === "B")),
       },
+      restAll: sortNewest(rest),
       commentCountA: comments.filter((c) => c.side === "A").length,
       commentCountB: comments.filter((c) => c.side === "B").length,
     };
   }, [comments]);
+
+  const displayTitle = arena.title || `${arena.side_a_title} vs ${arena.side_b_title}`;
 
   const bestSideLabel = best
     ? best.side === "A"
@@ -194,9 +199,7 @@ export default function ArenaDetail({
         >
           {ended ? "종료된 대결" : timeLeftLabel(arena.end_at)}
         </span>
-        <h1 className="text-2xl font-bold leading-snug text-ink">
-          {arena.title || `${arena.side_a_title} vs ${arena.side_b_title}`}
-        </h1>
+        <h1 className="text-2xl font-bold leading-snug text-ink">{displayTitle}</h1>
       </div>
 
       {/* 히어로 대진 */}
@@ -234,9 +237,44 @@ export default function ArenaDetail({
         onVote={handleVote}
       />
 
+      {/* 공유 (바이럴): 투표 전 "친구한테 물어보기" · 투표 후 "우리 편 초대하기" */}
+      {!ended && (
+        <div className="-mt-2 flex flex-col gap-1.5">
+          <ShareButton
+            title={displayTitle}
+            labelA={arena.side_a_title}
+            labelB={arena.side_b_title}
+            mySide={myVote}
+          />
+          <p className="text-center text-[13px] text-faint">
+            {myVote ? "같은 편을 데려와 득표율을 뒤집어요" : "친구 의견도 궁금하죠? 링크로 물어보세요"}
+          </p>
+        </div>
+      )}
+
       {/* 논쟁 스레드 */}
       <div className="mt-2">
-        <h2 className="mb-3 text-[17px] font-bold text-ink">논쟁 스레드</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[17px] font-bold text-ink">논쟁 스레드</h2>
+          <button
+            type="button"
+            onClick={() => setMergedView((v) => !v)}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold transition ${
+              mergedView
+                ? "border-ink bg-ink text-bg"
+                : "border-line bg-surface text-muted hover:text-ink"
+            }`}
+            aria-pressed={mergedView}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3 4 7l4 4" />
+              <path d="M4 7h16" />
+              <path d="m16 21 4-4-4-4" />
+              <path d="M20 17H4" />
+            </svg>
+            {mergedView ? "한쪽씩 보기" : "양쪽 같이 보기"}
+          </button>
+        </div>
 
         {/* 베스트 댓글 고정 */}
         {best && (
@@ -259,24 +297,36 @@ export default function ArenaDetail({
           </div>
         )}
 
-        {/* 편별 탭 */}
-        <div className="mb-4 flex gap-2">
-          <ThreadTab
-            active={tab === "A"}
-            corner="a"
-            label={`${arena.side_a_title}파`}
-            count={commentCountA}
-            onClick={() => setTab("A")}
+        {mergedView ? (
+          /* 양쪽 같이 보기: 전체 최신순 + 편 배지 */
+          <CommentList
+            comments={restAll}
+            onLike={handleLike}
+            sideLabels={{ A: arena.side_a_title, B: arena.side_b_title }}
+            emptyText="아직 논쟁이 없어요. 첫 댓글을 남겨보세요."
           />
-          <ThreadTab
-            active={tab === "B"}
-            corner="b"
-            label={`${arena.side_b_title}파`}
-            count={commentCountB}
-            onClick={() => setTab("B")}
-          />
-        </div>
-        <CommentList comments={restByTab[tab]} onLike={handleLike} />
+        ) : (
+          /* 한쪽씩 보기: 편별 탭 */
+          <>
+            <div className="mb-4 flex gap-2">
+              <ThreadTab
+                active={tab === "A"}
+                corner="a"
+                label={`${arena.side_a_title}파`}
+                count={commentCountA}
+                onClick={() => setTab("A")}
+              />
+              <ThreadTab
+                active={tab === "B"}
+                corner="b"
+                label={`${arena.side_b_title}파`}
+                count={commentCountB}
+                onClick={() => setTab("B")}
+              />
+            </div>
+            <CommentList comments={restByTab[tab]} onLike={handleLike} />
+          </>
+        )}
       </div>
 
       {/* 댓글 입력 */}

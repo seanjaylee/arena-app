@@ -7,23 +7,45 @@ export default function CommentItem({
   comment,
   onLike,
   highlight = false,
+  sideBadge,
 }: {
   comment: CommentWithMeta;
   onLike: (commentId: string) => void;
   highlight?: boolean;
+  sideBadge?: { corner: "a" | "b"; label: string };
 }) {
   const [revealed, setRevealed] = useState(false);
   const isBlurred = comment.spoiler_flag && !revealed;
 
+  const sideAccent =
+    sideBadge && !highlight
+      ? sideBadge.corner === "a"
+        ? "border-l-2 border-l-corner-a/60"
+        : "border-l-2 border-l-corner-b/60"
+      : "";
+
   return (
     <div
-      className={`rounded-xl border p-4 ${
+      className={`rounded-xl border p-4 ${sideAccent} ${
         highlight ? "border-gold/40 bg-gold/[0.06]" : "border-line bg-surface"
       }`}
     >
       <div className="mb-2 flex items-center justify-between text-[13px] text-muted">
-        <span className="font-semibold text-ink-soft">
-          {comment.profiles?.nickname ?? "탈퇴한 유저"}
+        <span className="flex items-center gap-1.5">
+          {sideBadge && (
+            <span
+              className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${
+                sideBadge.corner === "a"
+                  ? "bg-corner-a/10 text-corner-a-soft"
+                  : "bg-corner-b/10 text-corner-b-soft"
+              }`}
+            >
+              {sideBadge.label}
+            </span>
+          )}
+          <span className="font-semibold text-ink-soft">
+            {comment.profiles?.nickname ?? "탈퇴한 유저"}
+          </span>
         </span>
         <span>
           {new Date(comment.created_at).toLocaleString("ko-KR", {
