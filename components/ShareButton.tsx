@@ -65,8 +65,8 @@ export default function ShareButton({
       }
     }
 
-    // 폴백: 링크 복사
-    const ok = await copyText(`${shareText}\n${url}`);
+    // 폴백: 링크(URL)만 복사
+    const ok = await copyText(url);
     if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

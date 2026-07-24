@@ -165,8 +165,8 @@ export default function ArenaDetail({
     await refresh();
   };
 
-  // 전체 댓글 중 좋아요 1위를 베스트로, 나머지는 편별 최신순 + 양쪽 통합 최신순
-  const { best, restByTab, restAll, commentCountA, commentCountB } = useMemo(() => {
+  // 전체 댓글 중 좋아요 1위를 베스트로, 나머지는 편별 최신순
+  const { best, restByTab, commentCountA, commentCountB } = useMemo(() => {
     const { best, rest } = pickBestComment(comments);
     return {
       best,
@@ -174,7 +174,6 @@ export default function ArenaDetail({
         A: sortNewest(rest.filter((c) => c.side === "A")),
         B: sortNewest(rest.filter((c) => c.side === "B")),
       },
-      restAll: sortNewest(rest),
       commentCountA: comments.filter((c) => c.side === "A").length,
       commentCountB: comments.filter((c) => c.side === "B").length,
     };
@@ -298,13 +297,23 @@ export default function ArenaDetail({
         )}
 
         {mergedView ? (
-          /* 양쪽 같이 보기: 전체 최신순 + 편 배지 */
-          <CommentList
-            comments={restAll}
-            onLike={handleLike}
-            sideLabels={{ A: arena.side_a_title, B: arena.side_b_title }}
-            emptyText="아직 논쟁이 없어요. 첫 댓글을 남겨보세요."
-          />
+          /* 양쪽 같이 보기: 2열 분할로 반대 의견을 나란히 */
+          <div className="grid grid-cols-2 gap-2.5">
+            <ThreadColumn
+              corner="a"
+              label={arena.side_a_title}
+              count={commentCountA}
+              comments={restByTab.A}
+              onLike={handleLike}
+            />
+            <ThreadColumn
+              corner="b"
+              label={arena.side_b_title}
+              count={commentCountB}
+              comments={restByTab.B}
+              onLike={handleLike}
+            />
+          </div>
         ) : (
           /* 한쪽씩 보기: 편별 탭 */
           <>
@@ -336,6 +345,45 @@ export default function ArenaDetail({
         <p className="rounded-xl border border-dashed border-line py-3.5 text-center text-sm text-muted">
           {ended ? "종료된 대결입니다." : "투표 후 댓글을 남길 수 있어요."}
         </p>
+      )}
+    </div>
+  );
+}
+
+function ThreadColumn({
+  corner,
+  label,
+  count,
+  comments,
+  onLike,
+}: {
+  corner: "a" | "b";
+  label: string;
+  count: number;
+  comments: CommentWithMeta[];
+  onLike: (commentId: string) => void;
+}) {
+  const isA = corner === "a";
+  const headerStyle = isA
+    ? "border-corner-a/30 bg-corner-a/10 text-corner-a-soft"
+    : "border-corner-b/30 bg-corner-b/10 text-corner-b-soft";
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div
+        className={`sticky top-[57px] z-[1] flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[13px] font-bold backdrop-blur ${headerStyle}`}
+      >
+        <span className="line-clamp-1">{label}파</span>
+        <span className="text-[12px] opacity-70">{count}</span>
+      </div>
+      {comments.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-line py-8 text-center text-[13px] text-muted">
+          아직 없어요
+        </p>
+      ) : (
+        comments.map((c) => (
+          <CommentItem key={c.id} comment={c} onLike={onLike} compact />
+        ))
       )}
     </div>
   );
